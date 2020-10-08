@@ -6,6 +6,23 @@ Created on Wed Oct  7 10:03:16 2020
 @author: alberttenigin
 """
 
+"""
+
+    Critical lines for changing:
+        50 : server of your mail provider
+        51 : username for mail
+        55 : recipients
+        56 : sender name
+        57 : subject of the letter
+        59 : raw formatted text
+        62 : list of lines to be html-formatted
+        71 : files sources
+   109-114 : msg parameters 
+   
+   ALSO! you must create config.txt with your password
+    
+"""
+
 import smtplib
 import os
 from email.mime.multipart import MIMEMultipart
@@ -33,41 +50,18 @@ def read_password():
    return contents[0]
 
 server = 'smtp.gmail.com'
-user = 'teniginalbert@gmail.com'
+user = 'yourmail@gmail.com'
 
 password = read_password()
  
-recipients = ['vyalshin.emil@yandex.ru', 'vyalshin.emil@gmail.com']
-sender = 'teniginalbert@gmail.com'
-subject = 'Bewerbung von Emil Wjalschin 1'
+recipients = ['recipient1@gmail.com', 'recipient2@gmail.com']
+sender = 'yourmail@gmail.com'
+subject = 'yoursubject'
 
-text_str = 'Guten Morgen!\n\nMein Name ist Emil Wjalschin, \
-    ich bin ein Elektronikingenieur aus Russland. Ich habe Ihre Firma bei wlw gefunden und\
-        ich bin sehr interessiert an der Möglichkeit, für Ihr Unternehmen zu arbeiten. \
-            Haben Sie freie Stellen für die Position eines Elektronikingenieurs oder eine gleichwertige Stelle?\n\n\
-                Mein CV und Diplom im Anhang\n\
-                    —\n\
-                        Mit freundlichen Grüßen,\n\
-                            Emil Wjalschin\n\
-                                Russland, Sankt Petersburg\n\
-                                    Telefon: +7 (999) 512-69-75\n\
-                                        Viber: +7 (999) 512-69-75\n\
-                                            WhatsApp: +7 (999)512-69-75'
-texts = ['Guten Morgen!',\
-         '',
-         'Mein Name ist Emil Wjalschin, ich bin ein Elektronikingenieur aus Russland. \
-             Ich habe Ihre Firma bei wlw gefunden und ich bin sehr interessiert an der Möglichkeit, \
-                 für Ihr Unternehmen zu arbeiten. Haben Sie freie Stellen für die Position eines Elektronikingenieurs \
-            oder eine gleichwertige Stelle?',\
-         '',\
-        'Mein CV und Diplom im Anhang',\
-        '—',\
-        'Mit freundlichen Grüßen',\
-        'Emil Wjalschin',\
-        'Russland, Sankt Petersburg',\
-        'Telefon: +7 (999) 512-69-75',\
-        'Viber: +7 (999) 512-69-75',\
-        'WhatsApp: +7 (999)512-69-75']
+text_str = 'Hello \
+            My name is X \
+                Goodbye'
+texts = ['Hello', '', 'My name is X', '','Goodbye']
                             
 text = '<br>'.join(texts)
 
@@ -76,15 +70,29 @@ html = '<html><head></head><body><p>'+text+'</p></body></html>'
 part_text = MIMEText(text_str, 'plain')
 part_html = MIMEText(html, 'html') 
 
-filepath_1 = "/home/alberttenigin/projects/mail_sender/CV.docx"
-basename_1 = os.path.basename(filepath_1)
-filesize_1 = os.path.getsize(filepath_1)
-filepath_2 = "/home/alberttenigin/projects/mail_sender/diploma.jpg"
-basename_2 = os.path.basename(filepath_2)
-filesize_2 = os.path.getsize(filepath_2)
+filepaths = ["abs_path_to_your_file", "abs_path_to_another"]
+basenames = list(map(os.path.basename(), filepaths))
+filesizes = list(map(os.path.getsize(), filepaths))
+#filepath_1 = "/home/alberttenigin/projects/mail_sender/CV.docx"
+#basename_1 = os.path.basename(filepath_1)
+#filesize_1 = os.path.getsize(filepath_1)
+#filepath_2 = "/home/alberttenigin/projects/mail_sender/diploma.jpg"
+#basename_2 = os.path.basename(filepath_2)
+#filesize_2 = os.path.getsize(filepath_2)
 
-part_file_1 = MIMEBase('application', 'octet-stream; name="{}"'.format(basename_1))
-part_file_1.set_payload(open(filepath_1,"rb").read() )
+
+part_files = []
+
+for bn, fp, fs in zip(basenames, filepaths, filesizes):
+    part_file = MIMEBase('application', 'octet-stream; name="{}"'.format(bn))
+    part_file.set_payload(open(fp,"rb").read() )
+    part_file.add_header('Content-Description', bn)
+    part_file.add_header('Content-Disposition', 'attachment; filename="{}"; size={}'.format(bn, fs))
+    encoders.encode_base64(part_file)
+    part_files.append(part_file)
+"""
+part_file_1 = MIMEBase('application', 'octet-stream; name="{}"'.format(basenames[1]))
+part_file_1.set_payload(open(filepaths[0],"rb").read() )
 part_file_1.add_header('Content-Description', basename_1)
 part_file_1.add_header('Content-Disposition', 'attachment; filename="{}"; size={}'.format(basename_1, filesize_1))
 encoders.encode_base64(part_file_1)
@@ -94,7 +102,7 @@ part_file_2.set_payload(open(filepath_2,"rb").read() )
 part_file_2.add_header('Content-Description', basename_2)
 part_file_2.add_header('Content-Disposition', 'attachment; filename="{}"; size={}'.format(basename_2, filesize_2))
 encoders.encode_base64(part_file_2)
- 
+"""
 mail = smtplib.SMTP_SSL(server)
 mail.login(user, password)
 #mail.sendmail(sender, recipients, msg.as_string())
@@ -102,7 +110,7 @@ mail.login(user, password)
 for recipient in recipients:
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
-    msg['From'] = 'Albert Tenigin <' + sender + '>'
+    msg['From'] = 'My Name <' + sender + '>'
     msg['Reply-To'] = sender
     msg['Return-Path'] = sender
     msg['X-Mailer'] = 'Python/'+(python_version())
@@ -110,8 +118,9 @@ for recipient in recipients:
     msg.attach(part_text)
     msg.attach(part_html)
     msg['To'] = recipient
-    msg.attach(part_file_1)
-    msg.attach(part_file_2)
+    for pf in part_files:
+        msg.attach(pf)
+   # msg.attach(part_file_2)
     #mail.sendmail(sender, recipient, msg.as_string())
     mail.send_message(msg)
 
